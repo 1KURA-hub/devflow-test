@@ -17,7 +17,7 @@ concurrency:
 jobs:
   unit-build:
     name: Unit tests and web build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -50,7 +50,7 @@ jobs:
 
   api-tests:
     name: pytest API regression
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     services:
@@ -181,7 +181,7 @@ jobs:
 
   e2e:
     name: Playwright UI regression
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     services:
