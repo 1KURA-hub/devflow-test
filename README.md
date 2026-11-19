@@ -205,12 +205,28 @@ Playwright失败时额外保留Trace、截图和录像，CI失败时保留服务
 以及失败Trace、截图和录像均作为Actions artifact上传。
 作品仓库只展示质量门禁，不包含生产部署和SSH密钥操作。
 
+## 性能测试
+
+用JMeter对热点流、登录、点赞三个接口做10/50/100并发阶梯压测，脚本与完整结果见[`perf/`](perf/README.md)。
+
+| 场景 | 并发 | QPS | P99 |
+| --- | ---: | ---: | ---: |
+| 热点流（缓存命中） | 50 | 3888 | 24ms |
+| 点赞（写热点） | 50 | 2049 | 52ms |
+| 登录（bcrypt，CPU密集） | 50 | 146 | 506ms |
+
+压测发现并修复了一个连接池缺陷：`internal/db/mysql.go`未设置任何连接池参数，50并发热点流错误率89.7%
+（日志为`driver: bad connection`）；补上`MaxOpenConns`/`MaxIdleConns`后错误率降为0，成功QPS由65提升到3888。
+
+> 压测在单机完成（JMeter、服务、MySQL同机竞争CPU），数值仅用于横向对比，不代表生产容量。
+
 ## 项目亮点（简历摘要）
 
 - 基于`pytest + requests`实现30项接口测试，以client、fixture、用例三层结构覆盖边界值、权限、幂等、并发注册和异步通知链路。
 - 基于TypeScript strict与Playwright实现13项浏览器测试，使用Page Object、组件对象、自定义fixture、独立登录态和TestData覆盖认证、发帖、互动及跨用户流程。
 - 使用`route.fulfill()`和`route.abort()`验证500、401、断网与乐观更新回滚，并通过UI状态与接口结果交叉校验降低假通过。
 - 集成Midscene实现1条可选AI E2E场景，以自然语言执行关注、互动和通知闭环，并用API交叉断言防止视觉假通过。
+- 用JMeter完成10/50/100并发阶梯压测，定位并修复未配置数据库连接池导致的`driver: bad connection`，50并发热点流错误率由89.7%降为0。
 - 将Go/Web构建、pytest和Playwright接入三路并行CI，生成Allure测试报告并归档Trace、截图和录像等失败证据。
 
 ## 已知边界
